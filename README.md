@@ -6,7 +6,7 @@ Preview with `python3 -m http.server 4173 --directory dist` from this directory.
 
 ## Personalisation before guest launch
 
-The wedding date is 9 January 2026, as supplied, and the copy reflects a Nigerian wedding without assuming a particular ethnic or religious tradition. Replace the couple-name placeholders and add the venue, confirmed schedule, directions, accommodation, dress code and invitation policy in `dist/index.html`. Remove the preview notice once details are confirmed. RSVP is unavailable for the supplied past date: no guest data is collected or sent. Connect a chosen RSVP service or backend before accepting responses.
+The wedding date is 9 January 2027, with a church ceremony followed by a reception. The copy reflects a Nigerian wedding without assuming a particular ethnic tradition. Replace the couple-name placeholders and add the venue, confirmed schedule, directions, accommodation, dress code and invitation policy in `dist/index.html`. Remove the preview notice once details are confirmed. RSVP details are coming soon: no guest data is collected or sent. Connect a chosen RSVP service or backend before accepting responses.
 
 Typography uses Google Fonts with system fallbacks. The garden image is generated inspiration, not a photograph of a confirmed venue. The Site is initially private.
 
