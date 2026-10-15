@@ -5,11 +5,11 @@
 const WEDDING = {
   partnerOne: 'Ifiok',
   partnerTwo: 'Amarachi',
-  // Ceremony start with its UTC offset (Nigeria is +01:00). Before this moment the
-  // page shows a countdown, calendar links and RSVP; afterwards it says thank you.
-  start: '2026-01-09T11:00:00+01:00',
-  end: '2026-01-09T22:00:00+01:00',
-  timeZone: 'Africa/Lagos',
+  // Before the day the page shows a countdown, calendar links and RSVP;
+  // afterwards it says thank you. Times are Nigeria time (24-hour, e.g. '11:00').
+  date: '2027-01-09',
+  startTime: '',                  // leave empty until confirmed
+  endTime: '',
   venueName: '',                  // e.g. 'The Garden Pavilion'
   venueCity: '',                  // e.g. 'Lekki, Lagos'
   venueAddress: '',               // full street address shown under "Finding the venue"
@@ -31,8 +31,13 @@ function bind(key, value) {
 }
 
 /* Details */
-const start = WEDDING.start ? new Date(WEDDING.start) : null;
-const end = WEDDING.end ? new Date(WEDDING.end) : start && new Date(start.getTime() + 6 * 3600e3);
+const TIME_ZONE = 'Africa/Lagos';
+const at = time => new Date(`${WEDDING.date}T${time}:00+01:00`);
+const allDay = !WEDDING.startTime;
+const start = WEDDING.date ? at(WEDDING.startTime || '00:00') : null;
+const end = !start ? null
+  : WEDDING.endTime ? at(WEDDING.endTime)
+  : new Date(start.getTime() + (allDay ? 24 : 6) * 3600e3);
 const hasDate = start && !Number.isNaN(start.getTime());
 const isPast = hasDate && Date.now() > end.getTime();
 const names = WEDDING.partnerOne && WEDDING.partnerTwo ? `${WEDDING.partnerOne} & ${WEDDING.partnerTwo}` : '';
@@ -52,9 +57,9 @@ if (WEDDING.mapUrl) {
 }
 
 if (hasDate) {
-  const fmt = options => new Intl.DateTimeFormat('en-GB', { timeZone: WEDDING.timeZone, ...options }).format(start);
+  const fmt = options => new Intl.DateTimeFormat('en-GB', { timeZone: TIME_ZONE, ...options }).format(start);
   bind('dateLong', fmt({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
-  bind('dateNote', `Starts ${fmt({ hour: 'numeric', minute: '2-digit', hour12: true }).replace(' ', '')}, Nigeria time`);
+  bind('dateNote', allDay ? 'Start time to be confirmed' : `Starts ${fmt({ hour: 'numeric', minute: '2-digit', hour12: true }).replace(' ', '')}, Nigeria time`);
 }
 
 /* Countdown, calendar and RSVP depend on whether the day is still ahead */
@@ -83,16 +88,20 @@ function setupCalendar() {
   const title = names ? `${names}’s wedding` : 'Our wedding';
   const location = [WEDDING.venueName, WEDDING.venueAddress || WEDDING.venueCity].filter(Boolean).join(', ');
   const utc = date => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  // All-day events use plain dates; the end date is exclusive.
+  const day = offset => new Date(Date.parse(`${WEDDING.date}T00:00:00Z`) + offset * 864e5).toISOString().slice(0, 10).replace(/-/g, '');
+  const range = allDay ? [day(0), day(1)] : [utc(start), utc(end)];
   const google = new URL('https://calendar.google.com/calendar/render');
-  google.search = new URLSearchParams({ action: 'TEMPLATE', text: title, dates: `${utc(start)}/${utc(end)}`, location, details: window.location.href });
+  google.search = new URLSearchParams({ action: 'TEMPLATE', text: title, dates: `${range[0]}/${range[1]}`, location, details: window.location.href });
   $('[data-calendar-google]').href = google.toString();
 
   const esc = text => text.replace(/[\\,;]/g, m => `\\${m}`).replace(/\n/g, '\\n');
   $('[data-calendar-ics]').addEventListener('click', () => {
     const ics = [
       'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Our Wedding//EN', 'BEGIN:VEVENT',
-      `UID:${utc(start)}-wedding@ourwedding`, `DTSTAMP:${utc(new Date())}`,
-      `DTSTART:${utc(start)}`, `DTEND:${utc(end)}`,
+      `UID:${range[0]}-wedding@ourwedding`, `DTSTAMP:${utc(new Date())}`,
+      allDay ? `DTSTART;VALUE=DATE:${range[0]}` : `DTSTART:${range[0]}`,
+      allDay ? `DTEND;VALUE=DATE:${range[1]}` : `DTEND:${range[1]}`,
       `SUMMARY:${esc(title)}`, location && `LOCATION:${esc(location)}`, `URL:${window.location.href}`,
       'END:VEVENT', 'END:VCALENDAR'
     ].filter(Boolean).join('\r\n');
