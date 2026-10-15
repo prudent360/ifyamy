@@ -1,6 +1,6 @@
 # Our Wedding
 
-A responsive ivory-and-sage Nigerian wedding website, built with HTML, CSS and vanilla JavaScript. Static files are in `dist/`. No build dependencies are required.
+Ifiok & Amarachi's wedding website: a responsive, typographic design in deep green, paper and marigold, built with HTML, CSS and vanilla JavaScript. Static files are in `dist/`. No build dependencies are required.
 
 Preview with `python3 -m http.server 4173 --directory dist` from this directory.
 
@@ -17,8 +17,8 @@ RSVP stays an honest "coming soon" until you set `rsvpEndpoint` (any service tha
 
 The programme, travel, accommodation and FAQ copy are written directly in `dist/index.html`. Set `hidePreviewNote: true` once everything is confirmed.
 
-Typography uses Google Fonts with system fallbacks. The garden image is generated inspiration, not a photograph of a confirmed venue. The Site is initially private.
+Typography uses Google Fonts (Gloock and Figtree) with system fallbacks. The page uses no photographs; add real photos of the couple when they are available. The Site is initially private.
 
 ## Asset provenance
 
-`dist/garden.webp` and `dist/garden.jpg` are compressed web versions of `assets/garden-original.png`, which was generated with the built-in Imagegen tool. Prompt: “Use case: photorealistic-natural. Asset type: editorial hero photograph for an elegant ivory and sage wedding website. An intimate outdoor garden wedding table beneath olive trees, ivory linen, delicate white cosmos and garden roses in small vases, pale sage napkins, natural oak chairs, soft late-afternoon sunlight, foliage and a softly blurred old stone garden wall behind. Quiet, romantic, refined, organic. Vertical composition 2:3, generous greenery in upper third, table leading into depth. No people, no words, no logos, no watermark. This is illustrative wedding inspiration, not a specific real venue.”
+`assets/garden-original.png` is an AI-generated image from the earlier design. It is not used on the current page. It was generated with the built-in Imagegen tool.

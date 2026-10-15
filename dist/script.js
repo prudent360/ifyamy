@@ -21,6 +21,7 @@ const WEDDING = {
   hidePreviewNote: false          // set true once names, venue and programme are final
 };
 
+
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -40,9 +41,8 @@ bind('partnerOne', WEDDING.partnerOne);
 bind('partnerTwo', WEDDING.partnerTwo);
 bind('venueName', WEDDING.venueName);
 bind('venueCity', WEDDING.venueCity);
-bind('venueShort', (WEDDING.venueCity || WEDDING.venueName).toUpperCase());
+bind('venuePlace', [WEDDING.venueName, WEDDING.venueCity].filter(Boolean).join(', '));
 bind('venueAddress', WEDDING.venueAddress);
-if (names) document.title = `${names} · Our Nigerian Wedding`;
 if (WEDDING.hidePreviewNote) $('[data-preview-note]').remove();
 
 if (WEDDING.mapUrl) {
@@ -53,40 +53,34 @@ if (WEDDING.mapUrl) {
 
 if (hasDate) {
   const fmt = options => new Intl.DateTimeFormat('en-GB', { timeZone: WEDDING.timeZone, ...options }).format(start);
-  const longDate = fmt({ day: 'numeric', month: 'long', year: 'numeric' });
-  bind('dateShort', longDate.toUpperCase());
-  bind('dateLong', longDate);
-  bind('dateNote', `${fmt({ weekday: 'long' })} · ${fmt({ hour: 'numeric', minute: '2-digit', hour12: true }).replace(' ', '')}`);
-  $('[data-bind="dateShort"]').setAttribute('datetime', WEDDING.start);
+  bind('dateLong', fmt({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+  bind('dateNote', `Starts ${fmt({ hour: 'numeric', minute: '2-digit', hour12: true }).replace(' ', '')}, Nigeria time`);
 }
 
 /* Countdown, calendar and RSVP depend on whether the day is still ahead */
 if (hasDate && !isPast) {
-  const countdown = $('[data-countdown]');
-  countdown.hidden = false;
+  $('[data-countdown]').hidden = false;
   const tick = () => {
-    const ms = Math.max(0, start.getTime() - Date.now());
-    $('[data-unit="days"]').textContent = Math.floor(ms / 864e5);
-    $('[data-unit="hours"]').textContent = Math.floor(ms / 36e5) % 24;
-    $('[data-unit="minutes"]').textContent = Math.floor(ms / 6e4) % 60;
+    const days = Math.ceil((start.getTime() - Date.now()) / 864e5);
+    bind('countdown', days > 1 ? `${days} days to go` : days === 1 ? 'Tomorrow' : 'Today');
   };
   tick();
-  setInterval(tick, 30e3);
+  setInterval(tick, 60e3);
   setupCalendar();
   setupRsvp();
 } else if (isPast) {
-  $('[data-after-note]').hidden = false;
-  $('[data-rsvp-heading]').innerHTML = 'Love, family,<br> <em>always.</em>';
-  $('[data-rsvp-intro]').textContent = 'Thank you to everyone who celebrated with us, near and far.';
-  $('[data-rsvp-status-text]').textContent = 'RSVPs are now closed';
-  $('[data-rsvp-caption]').textContent = 'With love and gratitude.';
-  bind('rsvpFaq', 'RSVPs for our wedding have now closed. Thank you for celebrating with us.');
+  $('[data-announce]').textContent = 'are married.';
+  $('[data-rsvp-heading]').textContent = 'Thank you.';
+  $('[data-rsvp-intro]').textContent = 'To everyone who celebrated with us, near and far: thank you for being part of our day.';
+  $('[data-rsvp-status]').textContent = 'RSVPs are closed.';
+  bind('rsvpShort', 'Closed');
+  bind('rsvpFaq', 'RSVPs have closed. Thank you for celebrating with us.');
 } else {
   setupRsvp();
 }
 
 function setupCalendar() {
-  const title = names ? `${names}’s Wedding` : 'Our Nigerian Wedding';
+  const title = names ? `${names}’s wedding` : 'Our wedding';
   const location = [WEDDING.venueName, WEDDING.venueAddress || WEDDING.venueCity].filter(Boolean).join(', ');
   const utc = date => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const google = new URL('https://calendar.google.com/calendar/render');
@@ -113,9 +107,10 @@ function setupCalendar() {
 
 function setupRsvp() {
   if (!WEDDING.rsvpEndpoint && !WEDDING.rsvpWhatsApp) return;
-  const deadline = WEDDING.rsvpDeadline ? `Kindly respond by ${WEDDING.rsvpDeadline}.` : 'Kindly let us know if you can make it.';
+  const deadline = WEDDING.rsvpDeadline ? `Please reply by ${WEDDING.rsvpDeadline}.` : 'Please let us know if you can make it.';
   $('[data-rsvp-status]').hidden = true;
   $('[data-rsvp-caption]').textContent = deadline;
+  bind('rsvpShort', WEDDING.rsvpDeadline ? `By ${WEDDING.rsvpDeadline}` : 'Open now');
   bind('rsvpFaq', `Use the RSVP section at the bottom of this page. ${deadline}`);
 
   if (WEDDING.rsvpWhatsApp) {
@@ -143,7 +138,7 @@ function setupRsvp() {
       if (!response.ok) throw new Error(response.statusText);
       const attending = new FormData(form).get('attending') === 'Joyfully accepts';
       form.reset();
-      status.textContent = attending ? 'Thank you! We can’t wait to celebrate with you.' : 'Thank you for letting us know. You’ll be missed.';
+      status.textContent = attending ? 'Thank you! We can’t wait to see you.' : 'Thank you for letting us know. You’ll be missed.';
     } catch {
       status.textContent = 'Sorry, that didn’t send. Please try again, or RSVP on WhatsApp.';
     } finally {
@@ -151,52 +146,3 @@ function setupRsvp() {
     }
   });
 }
-
-/* Navigation */
-const header = $('.site-header');
-const menuButton = $('.menu-toggle');
-const navigation = $('#navigation');
-function closeMenu() {
-  menuButton.setAttribute('aria-expanded', 'false');
-  navigation.classList.remove('open');
-}
-menuButton.addEventListener('click', () => {
-  const expanded = menuButton.getAttribute('aria-expanded') === 'true';
-  menuButton.setAttribute('aria-expanded', String(!expanded));
-  navigation.classList.toggle('open', !expanded);
-});
-navigation.addEventListener('click', event => {
-  if (event.target.closest('a')) closeMenu();
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && menuButton.getAttribute('aria-expanded') === 'true') {
-    closeMenu();
-    menuButton.focus();
-  }
-});
-window.matchMedia('(min-width: 721px)').addEventListener('change', event => {
-  if (event.matches) closeMenu();
-});
-window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 8), { passive: true });
-
-const navLinks = $$('#navigation a');
-const sectionObserver = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
-    navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`));
-  });
-}, { rootMargin: '-45% 0px -50% 0px' });
-navLinks.forEach(link => {
-  const section = $(link.getAttribute('href'));
-  if (section) sectionObserver.observe(section);
-});
-
-/* Gentle reveal on scroll */
-const revealObserver = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
-    entry.target.classList.add('in');
-    revealObserver.unobserve(entry.target);
-  });
-}, { rootMargin: '0px 0px -8% 0px' });
-$$('.reveal').forEach(el => revealObserver.observe(el));
